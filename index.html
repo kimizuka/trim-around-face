@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>trim-around-face</title>
+  <meta name="viewport" content="width=device-width, viewport-fit=cover, shrink-to-fit=no" />
+  <meta name="generator" content="Sublime Text 3" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+</head>
+<body>
+  <script src="./lib/face-api.min.js"></script>
+  <script src="./lib/trim-and-resize.js"></script>
+  <script>
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    var img = new Image;
+    var size = 320;
+
+    img.onload = function() {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      trimAndResize(canvas, size).then(function(canvas) {
+        var base64 = canvas.toDataURL('image/jpeg');
+        var img = new Image;
+
+        img.src = base64;
+
+        document.body.appendChild(img);
+      });
+    };
+
+    img.src = './photo.jpg';
+
+    document.body.appendChild(canvas);
+
+    var p = document.createElement('p');
+
+    p.innerText = '👇';
+
+    document.body.appendChild(p);
+
+    function trimAndResize(canvas, size) {
+      return faceapi.nets.tinyFaceDetector.load('./weights').then(function() {
+        return faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions()).then(function(list) {
+          if (list.length) {
+            return render(list, canvas, size);
+          }
+
+          return resize(trim(canvas), size);
+        }).catch(function(err) {
+          console.error(err);
+        });
+      }).catch(function(err) {
+        console.error(err);
+      });
+    }
+
+    function render(list, src, size) {
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      var face = list[0];
+
+      canvas.width = Math.min(face.box.width * 2, src.width);
+      canvas.height = Math.min(face.box.height * 2, src.height);
+
+      ctx.drawImage(
+        src,
+        Math.max(Math.min(face.box.width / 2 - face.box.left, 0), canvas.width - src.width),
+        Math.max(Math.min(face.box.height / 2 - face.box.top, 0), canvas.height -src.height)
+      );
+
+      return resize(trim(canvas), size);
+    }
+
+    function trim(canvas) {
+      var squareCanvas = document.createElement('canvas');
+      var squareCtx = squareCanvas.getContext('2d');
+      var minSize = Math.min(canvas.width, canvas.height);
+
+      squareCanvas.width = squareCanvas.height = minSize;
+
+      squareCtx.drawImage(
+        canvas,
+        (squareCanvas.width - canvas.width) / 2,
+        (squareCanvas.height - canvas.height) / 2
+      );
+
+      return squareCanvas;
+    }
+
+    function resize(canvas, size) {
+      var resizeCanvas = document.createElement('canvas');
+      var resizeCtx = resizeCanvas.getContext('2d');
+      var canvasSize = Math.min(canvas.width, canvas.height);
+      var minSize = Math.min(canvasSize, size);
+
+      resizeCanvas.width = resizeCanvas.height = minSize;
+
+      resizeCtx.drawImage(
+        canvas,
+        0,
+        0,
+        minSize,
+        minSize
+      );
+
+      return resizeCanvas;
+    }
+  </script>
+</body>
+</html>
