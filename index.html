@@ -42,7 +42,7 @@
     document.body.appendChild(p);
 
     function trimAndResize(canvas, size) {
-      return faceapi.nets.tinyFaceDetector.load('./weights').then(function() {
+      return faceapi.nets.tinyFaceDetector.load('https://justadudewhohacks.github.io/face-api.js/models').then(function() {
         return faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions()).then(function(list) {
           if (list.length) {
             return render(list, canvas, size);
